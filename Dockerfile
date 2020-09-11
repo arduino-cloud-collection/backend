@@ -23,4 +23,4 @@ RUN apk del gcc musl-dev make
 COPY src/ .
 
 # command to run on container start
-CMD python3 -m uvicorn main:app --host 0.0.0.0
+CMD ["/usr/local/bin/uvicorn","main:app","--host","0.0.0.0"]
