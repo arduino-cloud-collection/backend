@@ -1,0 +1,8 @@
+.dockerignore
+.gitignore
+Dockerfile
+LICENSE
+Pipfile
+Pipfile.lock
+Procfile
+README.md
