@@ -6,3 +6,13 @@ services:
     - "8000:8000"
     volumes:
     - .:/code
+    depends_on:
+      - database
+    links:
+      - "database"
+    env_file:
+      - .env/api.env
+  database:
+    image: postgres:alpine
+    env_file:
+      - .env/postgres.env
