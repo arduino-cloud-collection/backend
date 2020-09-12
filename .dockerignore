@@ -1,0 +1,10 @@
+.dockerignore
+.gitignore
+Dockerfile
+LICENSE
+Pipfile
+Pipfile.lock
+Procfile
+README.md
+docker-compose.yml
+docker-compose-prod.yml
