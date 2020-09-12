@@ -20,7 +20,7 @@ RUN pip install -r requirements.txt
 RUN apk del gcc musl-dev make
 
 # copy the content of the local src directory to the working directory
-COPY src/ .
+COPY . .
 
 # command to run on container start
-CMD ["/usr/local/bin/uvicorn","main:app","--host","0.0.0.0"]
+CMD ["/usr/local/bin/uvicorn","src.main:app","--host","0.0.0.0"]
