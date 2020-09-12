@@ -1,7 +1,9 @@
+from src.settings import envConfig
 from typing import Optional
-
 from fastapi import FastAPI
+from src.database import DatabaseSession
 
+config = envConfig()
 app = FastAPI()
 
 
