@@ -13,5 +13,3 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 DatabaseSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 DatabaseBase = declarative_base()
-
-meta.create_all(engine)
