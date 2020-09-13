@@ -28,3 +28,11 @@ def delete_user(db: Session, user: userModel.User):
     db.delete(user)
     db.commit()
     return user
+
+
+def update_user(db: Session, user: userModel.User, data: userSchema.User):
+    db.query(userModel.User).filter(userModel.User.username == user.username).update(data)
+    db.commit()
+    returnValue = db.query(userModel.User).filter(userModel.User.id == user.id).options(load_only(*returnFields)).first()
+    del returnValue.password
+    return returnValue
