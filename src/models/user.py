@@ -6,7 +6,6 @@ class User(database.DatabaseBase):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(String(36))
     username = Column(String, unique=True, index=True)
     password = Column(String)
 
