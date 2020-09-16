@@ -33,6 +33,23 @@ def delete_user(db: Session, user: userModel.User):
 def update_user(db: Session, user: userModel.User, data: userSchema.User):
     db.query(userModel.User).filter(userModel.User.username == user.username).update(data)
     db.commit()
-    returnValue = db.query(userModel.User).filter(userModel.User.id == user.id).options(load_only(*returnFields)).first()
+    returnValue = db.query(userModel.User).filter(userModel.User.id == user.id).options(
+        load_only(*returnFields)).first()
     del returnValue.password
     return returnValue
+
+
+# WARNING PLAIN TEXT
+def verify_hash(password: str, hashesd_password: str):
+    if hashesd_password == password:
+        return True
+    else:
+        return False
+
+
+def authentificate_user(db: Session, username: str, password: str):
+    user = db.query(userModel.User).filter(userModel.User.username == username).first()
+    if not user or not verify_hash(password, user.password):
+        return False
+    else:
+        return user
