@@ -3,5 +3,5 @@ from typing import Optional
 
 
 class User(BaseModel):
-    username: str
-    password: str
+    username: str = None
+    password: str = None

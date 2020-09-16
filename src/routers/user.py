@@ -35,5 +35,6 @@ def delete_user(username: str, db: Session = Depends(database.get_db)):
 
 @router.put("/{username}", tags=["user"])
 def update_user(username: str, data: userSchema.User, db: Session = Depends(database.get_db)):
+    partial_data = data.dict(exclude_unset=True)
     user = userCrud.get_user(db=db, username=username)
-    return userCrud.update_user(db=db, user=user, data=data)
+    return userCrud.update_user(db=db, user=user, data=partial_data)
