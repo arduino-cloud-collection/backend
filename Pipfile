@@ -10,6 +10,7 @@ fastapi = "*"
 uvicorn = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
+python-jose = "*"
 
 [requires]
 python_version = "3.8"
