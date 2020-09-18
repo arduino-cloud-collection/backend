@@ -19,8 +19,7 @@ def get_users(db: Session):
 
 
 def get_user(db: Session, username: str):
-    user = db.query(userModel.User).filter(userModel.User.username == username).options(
-        load_only(*returnFields)).first()
+    user = db.query(userModel.User).filter(userModel.User.username == username).options(load_only(*returnFields)).first()
     return user
 
 
