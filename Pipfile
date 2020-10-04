@@ -12,6 +12,7 @@ sqlalchemy = "*"
 psycopg2-binary = "*"
 python-jose = "*"
 python-multipart = "*"
+blake3 = "*"
 
 [requires]
 python_version = "3.8"

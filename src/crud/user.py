@@ -1,18 +1,23 @@
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session, load_only
 
-from src import settings
 from src.models import user as userModel
 from src.schemas import user as userSchema
+from blake3 import blake3
 
 returnFields = ["username", "id"]
 
 
+def hash_password(password: str) -> str:
+    return blake3(str.encode(password)).hexdigest()
+
+
 def create_user(db: Session, user: userSchema.User):
-    new_user = userModel.User(username=user.username, password=user.password)
+    hash = hash_password(user.password)
+    new_user = userModel.User(username=user.username, password=hash)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    del new_user.password
     return new_user
 
 
@@ -43,8 +48,8 @@ def update_user(db: Session, user: userModel.User, data: userSchema.User):
 
 
 # WARNING PLAIN TEXT
-def verify_hash(password: str, hashesd_password: str):
-    if hashesd_password == password:
+def verify_hash(password: str, hashesd_password: str) -> bool:
+    if blake3(str.encode(password)).hexdigest() == hashesd_password:
         return True
     else:
         return False
