@@ -1,4 +1,6 @@
+bcrypt==3.2.0
 blake3==0.1.7
+cffi==1.14.3
 click==7.1.2
 ecdsa==0.14.1
 fastapi==0.61.1
@@ -6,6 +8,7 @@ h11==0.10.0
 httptools==0.1.1
 psycopg2-binary==2.8.6
 pyasn1==0.4.8
+pycparser==2.20
 pydantic==1.6.1
 python-jose==3.2.0
 python-multipart==0.0.5

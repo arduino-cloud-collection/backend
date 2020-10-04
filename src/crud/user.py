@@ -3,17 +3,19 @@ from sqlalchemy.orm import Session, load_only
 from src.models import user as userModel
 from src.schemas import user as userSchema
 from blake3 import blake3
+from bcrypt import gensalt
 
 returnFields = ["username", "id"]
 
 
-def hash_password(password: str) -> str:
-    return blake3(str.encode(password)).hexdigest()
+def hash_password(password: str, salt: str) -> str:
+    return blake3(str.encode(password) + str.encode(salt)).hexdigest()
 
 
 def create_user(db: Session, user: userSchema.User):
-    hash = hash_password(user.password)
-    new_user = userModel.User(username=user.username, password=hash)
+    salt = gensalt().decode()
+    hash = hash_password(user.password, salt)
+    new_user = userModel.User(username=user.username, password=hash, salt=salt)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -48,8 +50,8 @@ def update_user(db: Session, user: userModel.User, data: userSchema.User):
 
 
 # WARNING PLAIN TEXT
-def verify_hash(password: str, hashesd_password: str) -> bool:
-    if blake3(str.encode(password)).hexdigest() == hashesd_password:
+def verify_hash(password: str, hashesd_password: str, salt: str) -> bool:
+    if hash_password(password, salt) == hashesd_password:
         return True
     else:
         return False
@@ -57,7 +59,7 @@ def verify_hash(password: str, hashesd_password: str) -> bool:
 
 def authentificate_user(db: Session, username: str, password: str):
     user = db.query(userModel.User).filter(userModel.User.username == username).first()
-    if not user or not verify_hash(password, user.password):
+    if not user or not verify_hash(password, user.password, user.salt):
         return False
     else:
         return user

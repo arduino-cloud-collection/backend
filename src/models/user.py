@@ -8,6 +8,7 @@ class User(database.DatabaseBase):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    salt = Column(String)
 
 
 database.DatabaseBase.metadata.create_all(bind=database.engine)
