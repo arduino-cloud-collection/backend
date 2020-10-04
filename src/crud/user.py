@@ -1,4 +1,7 @@
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session, load_only
+
+from src import settings
 from src.models import user as userModel
 from src.schemas import user as userSchema
 
@@ -19,7 +22,8 @@ def get_users(db: Session):
 
 
 def get_user(db: Session, username: str):
-    user = db.query(userModel.User).filter(userModel.User.username == username).options(load_only(*returnFields)).first()
+    user = db.query(userModel.User).filter(userModel.User.username == username).options(
+        load_only(*returnFields)).first()
     return user
 
 
@@ -52,3 +56,5 @@ def authentificate_user(db: Session, username: str, password: str):
         return False
     else:
         return user
+
+

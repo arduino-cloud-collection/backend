@@ -1,13 +1,15 @@
-from fastapi import Depends, HTTPException, status
 from datetime import datetime, timedelta
+from typing import Optional
+
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from src import database
 from src import settings
 from src.crud import user as userCrud
-from src.models import user as userModel
-from fastapi.security import OAuth2PasswordBearer
-from typing import Optional
-from jose import jwt, JWTError
-from sqlalchemy.orm import Session
-from src import database
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
@@ -23,23 +25,24 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    db = database.get_db()
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def decode_token(token):
+    body = ""
     try:
         payload = jwt.decode(token, settings.config.JWT_KEY, algorithms=[settings.config.ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            return False
-        token_data = username
-    except:
-        return False
-    user = userCrud.get_user(db, username=token_data.username)
-    if user is None:
-        raise False
-    return user
+        body: str = payload.get("user")
+    except JWTError:
+        body = False
+    finally:
+        return body
 
+
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+    username = decode_token(token)
+    if username:
+        try:
+            user = userCrud.get_user(db, username)
+            return user
+        except IntegrityError:
+            raise HTTPException(status_code=403)
+    else:
+        raise HTTPException(status_code=403)
