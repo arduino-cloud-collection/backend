@@ -5,10 +5,10 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
-      <env name=" JWT_KEY" value="b7c18b06a0416d6af22bfaf49abaf7b75956056963e3116e3bbff3be72ed20fa" />
       <env name="ACCESS_TOKEN_EXPIRE_MINUTES" value="30" />
       <env name="ALGORITHM" value="HS256" />
       <env name="DATABASE_URL" value="sqlite:///test.db" />
+      <env name="JWT_KEY" value="b7c18b06a0416d6af22bfaf49abaf7b75956056963e3116e3bbff3be72ed20fa" />
     </envs>
     <option name="SDK_HOME" value="$USER_HOME$/.local/share/virtualenvs/backend-34xQ8ywB/bin/python" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />

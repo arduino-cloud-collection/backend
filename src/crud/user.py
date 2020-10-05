@@ -41,6 +41,9 @@ def delete_user(db: Session, user: userModel.User):
 
 
 def update_user(db: Session, user: userModel.User, data: userSchema.User):
+    if "password" in data and data["password"] != "":
+        data["salt"] = gensalt().decode()
+        data["password"] = hash_password(data["password"], data["salt"])
     db.query(userModel.User).filter(userModel.User.username == user.username).update(data)
     db.commit()
     returnValue = db.query(userModel.User).filter(userModel.User.id == user.id).options(
