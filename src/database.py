@@ -8,7 +8,11 @@ meta = MetaData()
 
 SQLALCHEMY_DATABASE_URL = settings.config.DATABASE_URL
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False})
+# Checks if sqlite is used
+if "sqlite:///" in settings.config.DATABASE_URL:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False})
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 DatabaseSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
