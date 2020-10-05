@@ -1,11 +1,5 @@
 # set baseimage to alpine linux
-FROM python:rc-alpine
-
-# update the image
-RUN apk update && apk upgrade
-
-# install dependencies
-RUN apk add gcc musl-dev make postgresql-libs postgresql-dev
+FROM python:3.8-slim
 
 # set the working directory
 WORKDIR /code
@@ -15,9 +9,6 @@ COPY requirements.txt .
 
 # install dependencies
 RUN pip install -r requirements.txt
-
-# remove dependencies after install
-RUN apk del gcc musl-dev make postgresql-dev
 
 # copy the content of the local src directory to the working directory
 COPY . .

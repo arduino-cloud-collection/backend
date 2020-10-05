@@ -1,12 +1,13 @@
-from os import environ
+from os import getenv
 
 
 class EnvConfig:
     def __init__(self):
-        try:
-            self.DATABASE_URL = environ["DATABASE_URL"]
-        except KeyError:
-            raise Exception("The Database-URL can't be empty.")
+        self.DATABASE_URL = getenv("DATABASE_URL")
+        self.JWT_KEY = getenv("JWT_KEY")
+        self.ALGORITHM = getenv("ALGORITHM")
+        self.ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+        self.PEPPER = getenv("PEPPER")
 
 
 config = EnvConfig()
