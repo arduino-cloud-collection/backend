@@ -7,6 +7,7 @@ class EnvConfig:
         self.JWT_KEY = getenv("JWT_KEY")
         self.ALGORITHM = getenv("ALGORITHM")
         self.ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+        self.PEPPER = getenv("PEPPER")
 
 
 config = EnvConfig()

@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session, load_only
 
 from src.models import user as userModel
 from src.schemas import user as userSchema
+from src import settings
 from blake3 import blake3
 from bcrypt import gensalt
 
@@ -9,7 +10,7 @@ returnFields = ["username", "id"]
 
 
 def hash_password(password: str, salt: str) -> str:
-    return blake3(str.encode(password) + str.encode(salt)).hexdigest()
+    return blake3(str.encode(password) + str.encode(salt) + str.encode(settings.config.PEPPER)).hexdigest()
 
 
 def create_user(db: Session, user: userSchema.User):
