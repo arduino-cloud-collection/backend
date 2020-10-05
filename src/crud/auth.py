@@ -26,14 +26,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 def decode_token(token):
-    body = ""
     try:
         payload = jwt.decode(token, settings.config.JWT_KEY, algorithms=[settings.config.ALGORITHM])
         body: str = payload.get("user")
     except JWTError:
         body = False
-    finally:
-        return body
+    return body
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
