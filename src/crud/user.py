@@ -24,12 +24,6 @@ def create_user(db: Session, user: userSchema.User):
     return new_user
 
 
-def delete_user(db: Session, user: userModel.User):
-    db.delete(user)
-    db.commit()
-    return user
-
-
 def update_user(db: Session, user: userModel.User, data: userSchema.User):
     if "password" in data and data["password"] != "":
         data["salt"] = gensalt().decode()

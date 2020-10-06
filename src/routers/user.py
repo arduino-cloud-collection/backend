@@ -32,7 +32,7 @@ def get_user_by_name(username: str, db: Session = Depends(database.get_db)):
 @router.delete("/{username}", tags=["user"])
 def delete_user(username: str, db: Session = Depends(database.get_db)):
     user = src.models.user.User.get_user(db=db, username=username)
-    return userCrud.delete_user(db=db, user=user)
+    return user.delete(db=db, user=user)
 
 
 @router.put("/{username}", tags=["user"])

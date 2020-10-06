@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Session, load_only
 from src import database
+from src.schemas import user as userSchema
 
 
 class User(database.DatabaseBase):
@@ -12,15 +13,20 @@ class User(database.DatabaseBase):
     password = Column(String)
     salt = Column(String)
 
-    @staticmethod
-    def get_users(db: Session):
-        users = db.query(User).options(load_only(*User.returnFields)).all()
+    @classmethod
+    def get_users(cls, db: Session):
+        users = db.query(cls).options(load_only(*cls.returnFields)).all()
         return users
 
-    @staticmethod
-    def get_user(db: Session, username: str):
-        user = db.query(User).filter(User.username == username).options(load_only(*User.returnFields)).first()
+    @classmethod
+    def get_user(cls, db: Session, username: str):
+        user = db.query(cls).filter(cls.username == username).options(load_only(*cls.returnFields)).first()
         return user
+
+    def delete(self, db: Session, user: userSchema.User):
+        db.delete(self)
+        db.commit()
+        return self
 
 
 database.DatabaseBase.metadata.create_all(bind=database.engine)
