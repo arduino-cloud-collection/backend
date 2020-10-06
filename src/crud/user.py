@@ -15,24 +15,13 @@ def hash_password(password: str, salt: str) -> str:
 
 def create_user(db: Session, user: userSchema.User):
     salt = gensalt().decode()
-    hash = hash_password(user.password, salt)
-    new_user = userModel.User(username=user.username, password=hash, salt=salt)
+    pw_hash = hash_password(user.password, salt)
+    new_user = userModel.User(username=user.username, password=pw_hash, salt=salt)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     del new_user.password
     return new_user
-
-
-def get_users(db: Session):
-    users = db.query(userModel.User).options(load_only(*returnFields)).all()
-    return users
-
-
-def get_user(db: Session, username: str):
-    user = db.query(userModel.User).filter(userModel.User.username == username).options(
-        load_only(*returnFields)).first()
-    return user
 
 
 def delete_user(db: Session, user: userModel.User):
@@ -67,5 +56,3 @@ def authentificate_user(db: Session, username: str, password: str):
         return False
     else:
         return user
-
-

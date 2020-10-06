@@ -7,6 +7,7 @@ from jose import jwt, JWTError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+import src.models.user
 from src import database
 from src import settings
 from src.crud import user as userCrud
@@ -38,7 +39,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     username = decode_token(token)
     if username:
         try:
-            user = userCrud.get_user(db, username)
+            user = src.models.user.get_user(db, username)
             return user
         except IntegrityError:
             raise HTTPException(status_code=403)
