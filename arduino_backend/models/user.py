@@ -10,9 +10,9 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only
 
-from src import database
-from src import settings
-from src.schemas import user as userSchema
+from arduino_backend import database
+from arduino_backend import settings
+from arduino_backend.schemas import user as userSchema
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 

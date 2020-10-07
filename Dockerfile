@@ -14,4 +14,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # command to run on container start
-CMD ["/usr/local/bin/uvicorn","src.main:app","--host","0.0.0.0"]
+CMD ["/usr/local/bin/uvicorn","arduino_backend.main:app","--host","0.0.0.0"]

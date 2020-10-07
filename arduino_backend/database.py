@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from src import settings
+from arduino_backend import settings
 from sqlalchemy import MetaData
 
 meta = MetaData()
