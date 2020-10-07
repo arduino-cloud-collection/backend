@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 from typing import Optional
 
 from bcrypt import gensalt
+from blake3 import blake3
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -9,13 +10,12 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only
 
-import src.models
-from src import database, settings
-from blake3 import blake3
+from src import database
 from src import settings
 from src.schemas import user as userSchema
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
+
 
 # Database class for the User model
 class User(database.DatabaseBase):
