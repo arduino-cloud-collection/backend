@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 import src.models.user
 from src import database
 from src import settings
-from src.crud import user as userCrud
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
@@ -39,7 +38,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     username = decode_token(token)
     if username:
         try:
-            user = src.models.user.get_user(db, username)
+            user = src.models.user.User.get_user(db, username)
             return user
         except IntegrityError:
             raise HTTPException(status_code=403)
