@@ -1,11 +1,21 @@
+from datetime import timedelta, datetime
+from typing import Optional
+
 from bcrypt import gensalt
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only
-from src import database
+
+import src.models
+from src import database, settings
 from blake3 import blake3
 from src import settings
 from src.schemas import user as userSchema
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
 # Database class for the User model
 class User(database.DatabaseBase):
@@ -68,20 +78,52 @@ class User(database.DatabaseBase):
 
     # Verify password and salt with a given hash
     @classmethod
-    def verify_hash(cls, password: str, hashesd_password: str, salt: str) -> bool:
-        if cls.hash_password(password, salt) == hashesd_password:
+    def verify_hash(cls, password: str, hashed_password: str, salt: str) -> bool:
+        if cls.hash_password(password, salt) == hashed_password:
             return True
         else:
             return False
 
     # Validate user and password
     @classmethod
-    def authentificate_user(cls, db: Session, username: str, password: str):
+    def authenticate_user(cls, db: Session, username: str, password: str):
         user = db.query(cls).filter(cls.username == username).first()
         if not user or not cls.verify_hash(password, user.password, user.salt):
             return False
         else:
             return user
+
+    @classmethod
+    def create_access_token(cls, data: dict, expires_delta: Optional[timedelta] = None):
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=15)
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(to_encode, settings.config.JWT_KEY, algorithm=settings.config.ALGORITHM)
+        return encoded_jwt
+
+    @classmethod
+    def decode_token(cls, token):
+        try:
+            payload = jwt.decode(token, settings.config.JWT_KEY, algorithms=[settings.config.ALGORITHM])
+            body: str = payload.get("user")
+        except JWTError:
+            body = False
+        return body
+
+    @classmethod
+    def get_current_user(cls, token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+        username = cls.decode_token(token)
+        if username:
+            try:
+                user = cls.get_user(db, username)
+                return user
+            except IntegrityError:
+                raise HTTPException(status_code=403)
+        else:
+            raise HTTPException(status_code=403)
 
 
 database.DatabaseBase.metadata.create_all(bind=database.engine)
