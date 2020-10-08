@@ -1,0 +1,18 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1 # may be actions/checkout@v2 now
+      - name: Login to DockerHub Registry
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+      - name: Build the latest Docker image
+        run: docker build . --file Dockerfile --tag arduinocloudcollection/backend:latest
+      - name: Push the latest Docker image
+        run: docker push arduinocloudcollection/backend:latest
