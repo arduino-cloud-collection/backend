@@ -12,7 +12,7 @@ services:
       - "database"
     env_file:
       - .env/api.env
-    entrypoint: ["/usr/local/bin/uvicorn","--reload","src.main:app","--host","0.0.0.0"]
+    entrypoint: ["/usr/local/bin/uvicorn","--reload","arduino_backend.main:app","--host","0.0.0.0"]
   database:
     image: postgres:alpine
     env_file:
