@@ -40,4 +40,4 @@ RUN /root/.cargo/bin/rustup self uninstall -y
 COPY . .
 
 # command to run on container start
-CMD ["/usr/local/bin/uvicorn","arduino_backend.main:app","--host","0.0.0.0"]
+CMD ["/usr/local/bin/uvicorn","arduino_backend.main:app","--host","192.168.0.1"]

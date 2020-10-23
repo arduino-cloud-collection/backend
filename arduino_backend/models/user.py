@@ -97,10 +97,7 @@ class User(database.DatabaseBase):
     # Verify password and salt with a given hash
     @classmethod
     def verify_hash(cls, password: str, hashed_password: str, salt: str) -> bool:
-        if cls.hash_password(password, salt) == hashed_password:
-            return True
-        else:
-            return False
+        return cls.hash_password(password, salt) == hashed_password
 
     # Validate user and password
     @classmethod
