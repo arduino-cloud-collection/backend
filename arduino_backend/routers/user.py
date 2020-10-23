@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 import arduino_backend.models.user
 from arduino_backend import database
-from arduino_backend.models import user as userModels
 from arduino_backend.schemas import user as userSchema
 from arduino_backend.models.user import User
 
@@ -17,7 +16,7 @@ def create_user(user: userSchema.User, db: Session = Depends(database.get_db)):
 
 @router.get("/", tags=["user"])
 def get_users(db: Session = Depends(database.get_db)):
-    return userModels.User.get_users(db=db)
+    return User.get_users(db=db)
 
 
 @router.get("/{username}", tags=["user"])
