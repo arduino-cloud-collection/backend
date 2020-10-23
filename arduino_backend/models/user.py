@@ -9,6 +9,7 @@ from jose import jwt, JWTError
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only
+from uuid import uuid4
 
 from arduino_backend import database
 from arduino_backend import settings
@@ -23,6 +24,7 @@ class User(database.DatabaseBase):
     returnFields = ["username", "id"]
 
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
     salt = Column(String)
@@ -39,6 +41,11 @@ class User(database.DatabaseBase):
         user = db.query(cls).filter(cls.username == username).options(load_only(*cls.returnFields)).first()
         return user
 
+    @classmethod
+    def get_user_by_uuid(cls, db: Session, uuid: str):
+        user = db.query(cls).filter(cls.uuid == uuid).options(load_only(*cls.returnFields)).first()
+        return user
+
     # Deletes the user from the database
     def delete(self, db: Session):
         db.delete(self)
@@ -50,10 +57,11 @@ class User(database.DatabaseBase):
     def create_user(cls, db: Session, user: userSchema.User):
         salt = gensalt().decode()
         pw_hash = cls.hash_password(user.password, salt)
-        new_user = User(username=user.username, password=pw_hash, salt=salt)
+        new_user = User(username=user.username, password=pw_hash, salt=salt, uuid=str(uuid4()))
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+        del new_user.uuid
         del new_user.password
         del new_user.salt
         return new_user
@@ -115,10 +123,10 @@ class User(database.DatabaseBase):
 
     @classmethod
     def get_current_user(cls, token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
-        username = cls.decode_token(token)
-        if username:
+        uuid = cls.decode_token(token)
+        if uuid:
             try:
-                user = cls.get_user(db, username)
+                user = cls.get_user_by_uuid(db, uuid)
                 return user
             except IntegrityError:
                 raise HTTPException(status_code=403)
