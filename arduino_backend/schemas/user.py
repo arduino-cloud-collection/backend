@@ -6,7 +6,7 @@ class User(BaseModel):
     password: str = None
 
     def check_content(self) -> bool:
-        if self.password is None or self.password is None:
+        if self.password is None or self.username is None:
             return False
         else:
             return True
