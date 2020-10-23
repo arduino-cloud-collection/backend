@@ -9,6 +9,7 @@ from jose import jwt, JWTError
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only
+from uuid import uuid4
 
 from arduino_backend import database
 from arduino_backend import settings
@@ -23,6 +24,7 @@ class User(database.DatabaseBase):
     returnFields = ["username", "id"]
 
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), unique=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
     salt = Column(String)
@@ -39,6 +41,11 @@ class User(database.DatabaseBase):
         user = db.query(cls).filter(cls.username == username).options(load_only(*cls.returnFields)).first()
         return user
 
+    @classmethod
+    def get_user_by_uuid(cls, db: Session, uuid: str):
+        user = db.query(cls).filter(cls.uuid == uuid).options(load_only(*cls.returnFields)).first()
+        return user
+
     # Deletes the user from the database
     def delete(self, db: Session):
         db.delete(self)
@@ -48,15 +55,22 @@ class User(database.DatabaseBase):
     # Creates a new user and hashes its password
     @classmethod
     def create_user(cls, db: Session, user: userSchema.User):
-        salt = gensalt().decode()
-        pw_hash = cls.hash_password(user.password, salt)
-        new_user = User(username=user.username, password=pw_hash, salt=salt)
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        del new_user.password
-        del new_user.salt
-        return new_user
+        if not user.check_content():
+            raise HTTPException(status_code=400)
+        else:
+            salt = gensalt().decode()
+            pw_hash = cls.hash_password(user.password, salt)
+            new_user = User(username=user.username, password=pw_hash, salt=salt, uuid=str(uuid4()))
+            try:
+                db.add(new_user)
+                db.commit()
+                db.refresh(new_user)
+                del new_user.uuid
+                del new_user.password
+                del new_user.salt
+                return new_user
+            except IntegrityError:
+                raise HTTPException(status_code=400)
 
     # Hash and salt the given password with blake3
     @classmethod
@@ -68,13 +82,17 @@ class User(database.DatabaseBase):
         if "password" in data and data["password"] != "":
             data["salt"] = gensalt().decode()
             data["password"] = self.hash_password(data["password"], data["salt"])
-        db.query(User).filter(User.username == self.username).update(data)
-        db.commit()
-        returnValue = db.query(User).filter(User.id == self.id).options(
-            load_only(*self.returnFields)).first()
-        del returnValue.password
-        del returnValue.salt
-        return returnValue
+        try:
+            db.query(User).filter(User.username == self.username).update(data)
+            db.commit()
+            returnValue = db.query(User).filter(User.id == self.id).options(
+                load_only(*self.returnFields)).first()
+            del returnValue.password
+            del returnValue.salt
+            del returnValue.uuid
+            return returnValue
+        except IntegrityError:
+            raise HTTPException(status_code=400)
 
     # Verify password and salt with a given hash
     @classmethod
@@ -115,10 +133,10 @@ class User(database.DatabaseBase):
 
     @classmethod
     def get_current_user(cls, token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
-        username = cls.decode_token(token)
-        if username:
+        uuid = cls.decode_token(token)
+        if uuid:
             try:
-                user = cls.get_user(db, username)
+                user = cls.get_user_by_uuid(db, uuid)
                 return user
             except IntegrityError:
                 raise HTTPException(status_code=403)
