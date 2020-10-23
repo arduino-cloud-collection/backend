@@ -32,17 +32,23 @@ def get_user_by_name(username: str, db: Session = Depends(database.get_db)):
 @router.delete("/{username}", tags=["user"])
 def delete_user(username: str, db: Session = Depends(database.get_db), current_user: User = Depends(User.get_current_user)):
     user = arduino_backend.models.user.User.get_user(db=db, username=username)
-    if current_user.username == user.username:
-        return user.delete(db=db)
+    if user is None:
+        raise HTTPException(status_code=404)
     else:
-        raise HTTPException(status_code=403)
+        if current_user.username == user.username:
+            return user.delete(db=db)
+        else:
+            raise HTTPException(status_code=403)
 
 
 @router.put("/{username}", tags=["user"])
 def update_user(username: str, data: userSchema.User, db: Session = Depends(database.get_db), current_user: User = Depends(User.get_current_user)):
     partial_data = data.dict(exclude_unset=True)
     user = arduino_backend.models.user.User.get_user(db=db, username=username)
-    if current_user.username == user.username:
-        return user.update_user(db=db, data=partial_data)
+    if user is None:
+        raise HTTPException(status_code=404)
     else:
-        raise HTTPException(status_code=403)
+        if current_user.username == user.username:
+            return user.update_user(db=db, data=partial_data)
+        else:
+            raise HTTPException(status_code=403)
