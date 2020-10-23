@@ -55,16 +55,22 @@ class User(database.DatabaseBase):
     # Creates a new user and hashes its password
     @classmethod
     def create_user(cls, db: Session, user: userSchema.User):
-        salt = gensalt().decode()
-        pw_hash = cls.hash_password(user.password, salt)
-        new_user = User(username=user.username, password=pw_hash, salt=salt, uuid=str(uuid4()))
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        del new_user.uuid
-        del new_user.password
-        del new_user.salt
-        return new_user
+        if not user.check_content():
+            raise HTTPException(status_code=400)
+        else:
+            salt = gensalt().decode()
+            pw_hash = cls.hash_password(user.password, salt)
+            new_user = User(username=user.username, password=pw_hash, salt=salt, uuid=str(uuid4()))
+            try:
+                db.add(new_user)
+                db.commit()
+                db.refresh(new_user)
+                del new_user.uuid
+                del new_user.password
+                del new_user.salt
+                return new_user
+            except IntegrityError:
+                raise HTTPException(status_code=400)
 
     # Hash and salt the given password with blake3
     @classmethod
@@ -76,13 +82,17 @@ class User(database.DatabaseBase):
         if "password" in data and data["password"] != "":
             data["salt"] = gensalt().decode()
             data["password"] = self.hash_password(data["password"], data["salt"])
-        db.query(User).filter(User.username == self.username).update(data)
-        db.commit()
-        returnValue = db.query(User).filter(User.id == self.id).options(
-            load_only(*self.returnFields)).first()
-        del returnValue.password
-        del returnValue.salt
-        return returnValue
+        try:
+            db.query(User).filter(User.username == self.username).update(data)
+            db.commit()
+            returnValue = db.query(User).filter(User.id == self.id).options(
+                load_only(*self.returnFields)).first()
+            del returnValue.password
+            del returnValue.salt
+            del returnValue.uuid
+            return returnValue
+        except IntegrityError:
+            raise HTTPException(status_code=400)
 
     # Verify password and salt with a given hash
     @classmethod
