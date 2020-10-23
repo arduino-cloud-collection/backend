@@ -128,3 +128,4 @@ dmypy.json
 .pyre/
 src/test.db
 .idea
+test.db
