@@ -65,10 +65,8 @@ class User(database.DatabaseBase):
                 db.add(new_user)
                 db.commit()
                 db.refresh(new_user)
-                del new_user.uuid
-                del new_user.password
-                del new_user.salt
-                return new_user
+                return_user = cls.get_user_by_uuid(db=db, uuid=new_user.uuid)
+                return return_user
             except IntegrityError:
                 raise HTTPException(status_code=400)
 
@@ -87,9 +85,6 @@ class User(database.DatabaseBase):
             db.commit()
             returnValue = db.query(User).filter(User.id == self.id).options(
                 load_only(*self.returnFields)).first()
-            del returnValue.password
-            del returnValue.salt
-            del returnValue.uuid
             return returnValue
         except IntegrityError:
             raise HTTPException(status_code=400)
