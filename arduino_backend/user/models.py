@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from arduino_backend import database
 from arduino_backend import settings
-from arduino_backend.schemas import user as userSchema
+from arduino_backend.user import schemas as userSchema
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
 
