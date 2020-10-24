@@ -140,5 +140,3 @@ class User(database.DatabaseBase):
         else:
             raise HTTPException(status_code=403)
 
-
-database.DatabaseBase.metadata.create_all(bind=database.engine)
