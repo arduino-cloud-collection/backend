@@ -45,7 +45,7 @@ jobs:
       working-directory: ${{env.working-directory}}
     - name: Test with pytest
       run: |
-        pytest
+        cd arduino_backend && pytest
       working-directory: ${{env.working-directory}}
     - name: Build pypi package
       run: |
