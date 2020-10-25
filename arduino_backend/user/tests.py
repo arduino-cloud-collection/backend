@@ -1,13 +1,18 @@
 import unittest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from arduino_backend.user.models import User
+from arduino_backend.user.models import User, oauth2_scheme
 from sqlalchemy.exc import InvalidRequestError
 from arduino_backend.user import schemas
 from os import remove
 from fastapi import HTTPException
 from arduino_backend.settings import config
 from blake3 import blake3
+from datetime import datetime, timedelta
+from jose import jwt
+from time import sleep
+from fastapi import Depends
+from unittest.mock import MagicMock
 
 
 def remove_items_from_obj_except(obj, items):
@@ -153,6 +158,103 @@ class update_user_tests(databaseTest):
         user.salt = updated_user.salt
         user.password = User.hash_password("test", user.salt)
         self.assertEqual(updated_user, user)
+
+
+class verify_hash_tests(unittest.TestCase):
+    def test_correct_hash(self):
+        hash_value = blake3(str.encode("test") + str.encode("salt") + str.encode(config.PEPPER)).hexdigest()
+        self.assertTrue(User.verify_hash("test", hash_value, "salt"))
+
+    def test_wrong_hash(self):
+        self.assertFalse(User.verify_hash("test", "werzdrtutdutdutujtutft", "salt"))
+
+
+class authentificate_user_tests(databaseTest):
+    def test_correct_user(self):
+        user = schemas.User(username="test", password="test")
+        User.create_user(self.database, user)
+        self.assertEqual(User.authenticate_user(self.database, "test", "test"),
+                         self.database.query(User).filter(User.username == "test").first())
+
+    def test_wrong_password(self):
+        user = schemas.User(username="test", password="test")
+        User.create_user(self.database, user)
+        self.assertFalse(User.authenticate_user(self.database, "test", "test2"))
+
+    def test_wrong_username(self):
+        user = schemas.User(username="test", password="test")
+        User.create_user(self.database, user)
+        self.assertFalse(User.authenticate_user(self.database, "test2", "test"))
+
+
+class create_acess_token_tests(unittest.TestCase):
+    def test_token_creation(self):
+        token = User.create_access_token({})
+        self.assertEqual(token, jwt.encode({"exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                                           algorithm=config.ALGORITHM))
+
+    def test_data_dict(self):
+        token = User.create_access_token({"foo": "bar"})
+        self.assertEqual(token,
+                         jwt.encode({"foo": "bar", "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                                    algorithm=config.ALGORITHM))
+
+    def test_custom_timedelta(self):
+        token = User.create_access_token({}, expires_delta=timedelta(minutes=30))
+        self.assertEqual(token, jwt.encode({"exp": datetime.utcnow() + timedelta(minutes=30)}, config.JWT_KEY,
+                                           algorithm=config.ALGORITHM))
+
+
+class decode_token_tests(unittest.TestCase):
+    def test_correct_decoding(self):
+        token = jwt.encode({"user": "foo", "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                           algorithm=config.ALGORITHM)
+        self.assertEqual(User.decode_token(token), "foo")
+
+    def test_wrong_decoding(self):
+        token = jwt.encode({"userfalse": "foo", "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                           algorithm=config.ALGORITHM)
+        self.assertFalse(User.decode_token(token))
+
+    def test_manipulated_token(self):
+        token = jwt.encode({"user": "foo", "exp": datetime.utcnow() + timedelta(minutes=15)},
+                           "b7c18b06a0416d6af22bfaf49abaf7b75956056963e3116e3bbff3be72ed20fe",
+                           algorithm=config.ALGORITHM)
+        self.assertFalse(User.decode_token(token))
+
+    def test_expired_token(self):
+        token = jwt.encode({"user": "foo", "exp": datetime.utcnow() + timedelta(microseconds=1)}, config.JWT_KEY,
+                           algorithm=config.ALGORITHM)
+        sleep(1)
+        self.assertFalse(User.decode_token(token))
+
+
+class get_current_user_tests(databaseTest):
+    def test_normal_behaviour(self):
+        user = User.create_user(self.database, schemas.User(username="test", password="test"))
+        full_user = self.database.query(User).filter(User.username == user.username).first()
+        token = jwt.encode({"user": full_user.uuid, "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                           algorithm=config.ALGORITHM)
+        oauth2_scheme_mock = MagicMock(return_value=token)
+        return_user = User.get_current_user(oauth2_scheme_mock(), self.database)
+        self.assertEqual(return_user, full_user)
+
+    def current_user_runner(self, oauth_mock: MagicMock):
+        User.get_current_user(oauth_mock(), self.database)
+
+    def test_manipulated_token(self):
+        user = User.create_user(self.database, schemas.User(username="test", password="test"))
+        full_user = self.database.query(User).filter(User.username == user.username).first()
+        token = jwt.encode({"userlol": full_user.uuid, "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                           algorithm=config.ALGORITHM)
+        oauth2_scheme_mock = MagicMock(return_value=token)
+        self.assertRaises(HTTPException, self.current_user_runner, oauth2_scheme_mock)
+
+    def test_nonexisting_user(self):
+        token = jwt.encode({"user": "lol", "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+                           algorithm=config.ALGORITHM)
+        oauth2_scheme_mock = MagicMock(return_value=token)
+        self.assertEqual(User.get_current_user(oauth2_scheme_mock(), self.database), None)
 
 
 if __name__ == '__main__':
