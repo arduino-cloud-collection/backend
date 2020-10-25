@@ -19,6 +19,7 @@ jobs:
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       PEPPER: hcQoBj+~Z#JxLd0K
+      PYTHONPATH: /home/runner/work/backend/backend
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
