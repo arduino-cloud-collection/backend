@@ -4,6 +4,9 @@ FROM python:3.9.0-slim
 # Disables Python Buffering
 ENV PYTHONUNBUFFERED=1
 
+# Disables Python Buffering
+ENV PYTHONUNBUFFERED=1
+
 # set the working directory
 WORKDIR /code
 
