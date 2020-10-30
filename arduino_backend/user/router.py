@@ -25,6 +25,8 @@ def get_user_by_name(username: str, db: Session = Depends(database.get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     else:
+        for i in user.controllers:
+            del i.owner
         return user
 
 

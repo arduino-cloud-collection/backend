@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import Session, relationship
 from uuid import uuid4
+import logging
 
 from arduino_backend.database import DatabaseBase
 from arduino_backend.controller.schemas import controller_schema
@@ -12,16 +13,19 @@ class Controller(DatabaseBase):
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), unique=True)
     name = Column(String(100))
-    user = Column(String(36), ForeignKey(User.uuid))
+    user_id = Column(String(36), ForeignKey("users.uuid"))
+
+    owner = relationship("User", back_populates="controllers")
 
     @classmethod
     def get_user_controllers(cls, db: Session, user: User):
-        return db.query(cls).filter(cls.user == user.uuid).all()
+        controllers = db.query(cls).filter(cls.owner == user).all()
+        return controllers
 
     @classmethod
     def create_controller(cls, db: Session, data: controller_schema, user_id: User.uuid):
         uuid = str(uuid4())
-        new_controller = Controller(uuid=uuid, name=data.name, user=user_id)
+        new_controller = Controller(uuid=uuid, name=data.name, user_id=user_id)
         db.add(new_controller)
         db.commit()
         return new_controller
@@ -32,4 +36,6 @@ class Pin(DatabaseBase):
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), unique=True)
     name = Column(String)
-    controller = Column(String(36), ForeignKey(Controller.uuid))
+#    controller_id = Column(String(36), ForeignKey(Controller.uuid))
+
+#    controller = relationship("Controller", backref="pins")
