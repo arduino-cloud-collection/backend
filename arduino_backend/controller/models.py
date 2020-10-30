@@ -4,7 +4,7 @@ from uuid import uuid4
 import logging
 
 from arduino_backend.database import DatabaseBase
-from arduino_backend.controller.schemas import controller_schema
+from arduino_backend.controller.schemas import controller_schema, pin_schema
 from arduino_backend.user.models import User
 
 
@@ -26,6 +26,8 @@ class Controller(DatabaseBase):
     def create_controller(cls, db: Session, data: controller_schema, user_id: User.uuid):
         uuid = str(uuid4())
         new_controller = Controller(uuid=uuid, name=data.name, user_id=user_id)
+        for i in range(9):
+            Pin.create_pin(db, pin_schema(name="D" + str(i)), new_controller.uuid)
         db.add(new_controller)
         db.commit()
         return new_controller
@@ -36,6 +38,14 @@ class Pin(DatabaseBase):
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), unique=True)
     name = Column(String)
-#    controller_id = Column(String(36), ForeignKey(Controller.uuid))
+    controller_id = Column(String(36), ForeignKey(Controller.uuid))
 
-#    controller = relationship("Controller", backref="pins")
+    controller = relationship("Controller", backref="pins")
+
+    @classmethod
+    def create_pin(cls, db: Session, data: pin_schema, controller_id: Controller.uuid):
+        uuid = str(uuid4())
+        pin = Pin(uuid=uuid, name=data.name, controller_id=controller_id)
+        db.add(pin)
+        db.commit()
+        return pin
