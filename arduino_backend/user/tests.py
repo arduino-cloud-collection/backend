@@ -1,18 +1,18 @@
+import json
 import unittest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from arduino_backend.user.models import User, oauth2_scheme
-from sqlalchemy.exc import InvalidRequestError
-from arduino_backend.user import schemas
-from os import remove
-from fastapi import HTTPException
-from arduino_backend.settings import config
-from blake3 import blake3
 from datetime import datetime, timedelta
-from jose import jwt
 from time import sleep
-from fastapi import Depends
 from unittest.mock import MagicMock
+
+from blake3 import blake3
+from fastapi import HTTPException
+from jose import jwt
+from sqlalchemy.exc import InvalidRequestError
+
+from arduino_backend.settings import config
+from arduino_backend.testwrapper import databaseTest
+from arduino_backend.user import schemas
+from arduino_backend.user.models import User
 
 
 def remove_items_from_obj_except(obj, items):
@@ -24,19 +24,6 @@ def remove_items_from_obj_except(obj, items):
                 is_in_items = True
         if not is_in_items:
             del i
-
-
-class databaseTest(unittest.TestCase):
-
-    def setUp(self) -> None:
-        self.engine = create_engine('sqlite:///test.db')
-        self.Session = sessionmaker(bind=self.engine)
-        self.database = self.Session()
-        User.metadata.create_all(self.engine)
-
-    def tearDown(self) -> None:
-        User.metadata.drop_all(self.engine)
-        remove("test.db")
 
 
 class Get_users_tests(databaseTest):
@@ -245,7 +232,8 @@ class get_current_user_tests(databaseTest):
     def test_manipulated_token(self):
         user = User.create_user(self.database, schemas.User(username="test", password="test"))
         full_user = self.database.query(User).filter(User.username == user.username).first()
-        token = jwt.encode({"userlol": full_user.uuid, "exp": datetime.utcnow() + timedelta(minutes=15)}, config.JWT_KEY,
+        token = jwt.encode({"userlol": full_user.uuid, "exp": datetime.utcnow() + timedelta(minutes=15)},
+                           config.JWT_KEY,
                            algorithm=config.ALGORITHM)
         oauth2_scheme_mock = MagicMock(return_value=token)
         self.assertRaises(HTTPException, self.current_user_runner, oauth2_scheme_mock)
@@ -255,6 +243,155 @@ class get_current_user_tests(databaseTest):
                            algorithm=config.ALGORITHM)
         oauth2_scheme_mock = MagicMock(return_value=token)
         self.assertEqual(User.get_current_user(oauth2_scheme_mock(), self.database), None)
+
+
+class user_get_tests(databaseTest):
+    def test_statuscode(self):
+        response = self.client_mock.get("/user")
+        self.assertEqual(response.status_code, 200)
+
+    def test_empty_content(self):
+        response = self.client_mock.get("/user")
+        self.assertEqual(json.loads(response.content.decode()), [])
+
+    def test_single_content(self):
+        User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        response = self.client_mock.get("/user")
+        users = User.get_users(self.database)
+        for i in range(len(users)):
+            delattr(users[i], "_sa_instance_state")
+            users[i] = users[i].__dict__
+        self.assertEqual(json.loads(response.content.decode()), users)
+
+    def test_multiple_content(self):
+        User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        User.create_user(self.database, schemas.User(username="lorem2", password="ipsum"))
+        response = self.client_mock.get("/user")
+        users = User.get_users(self.database)
+        for i in range(len(users)):
+            delattr(users[i], "_sa_instance_state")
+            users[i] = users[i].__dict__
+        self.assertEqual(json.loads(response.content.decode()), users)
+
+
+class single_user_get_tests(databaseTest):
+    def test_nonexisting_user(self):
+        response = self.client_mock.get("/user/lol")
+        self.assertEqual(response.status_code, 404)
+
+    def test_nonexisting_user_content(self):
+        response = self.client_mock.get("/user/lol")
+        self.assertEqual(json.loads(response.content.decode()), {"detail": "User not found"})
+
+    def test_existing_user_code(self):
+        User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        response = self.client_mock.get("/user/lorem")
+        self.assertEqual(response.status_code, 200)
+
+    def test_existing_user_content(self):
+        single_user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        response = self.client_mock.get("/user/lorem")
+        delattr(single_user, "_sa_instance_state")
+        single_user = single_user.__dict__
+        del single_user["uuid"], single_user["password"], single_user["salt"]
+        self.assertEqual(json.loads(response.content.decode()), single_user)
+
+
+class user_post_test(databaseTest):
+    def test_user_creation_code(self):
+        response = self.client_mock.post("/user/", json={"username": "lorem", "password": "ipsum"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_creation_content(self):
+        response = self.client_mock.post("/user/", json={"username": "lorem", "password": "ipsum"})
+        user = self.database.query(User).filter(User.username == "lorem").first().__dict__
+        del user["_sa_instance_state"]
+        self.assertEqual(json.loads(response.content.decode()), user)
+
+    def test_json_error(self):
+        response = self.client_mock.post("/user/", json={"userlool": "lorem", "password": "ipsum"})
+        self.assertEqual(response.status_code, 400)
+
+
+class user_delete_tests(databaseTest):
+    def test_user_deletion(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.delete("/user/lorem", headers={"Authorization": "Bearer " + token})
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_deletion_content(self):
+        User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        user = User.get_user(self.database, "lorem")
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.delete("/user/lorem", headers={"Authorization": "Bearer " + token})
+        delattr(user, "uuid")
+        delattr(user, "_sa_instance_state")
+        self.assertEqual(response.json(), user.__dict__)
+
+    def test_deletion_without_token(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        response = self.client_mock.delete("/user/lorem")
+        self.assertEqual(response.status_code, 401)
+
+    def test_nonexisting_deletion(self):
+        User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        user = User.get_user(self.database, "lorem")
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.delete("/user/lol", headers={"Authorization": "Bearer " + token})
+        self.assertEqual(response.status_code, 404)
+
+    def test_unallowed_deletion(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        User.create_user(self.database, schemas.User(username="foo", password="bar"))
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.delete("/user/foo", headers={"Authorization": "Bearer " + token})
+        self.assertEqual(response.status_code, 403)
+
+
+class user_update_tests(databaseTest):
+    def test_user_modify(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.put("/user/lorem", headers={"Authorization": "Bearer " + token},
+                                        json={"username": "lol", "password": "lol"})
+        self.assertEqual(response.status_code, 200)
+        self.database.refresh(user)
+        updated_user = User.get_user(self.database, "lol")
+        delattr(updated_user, "_sa_instance_state")
+        # del updated_user["_sa_instance_state"]
+        self.assertEqual(response.json(), updated_user.__dict__)
+
+    def test_partial_user_modify(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.put("/user/lorem", headers={"Authorization": "Bearer " + token},
+                                        json={"password": "lol"})
+        self.database.refresh(user)
+        updated_user = User.get_user(self.database, "lorem")
+        delattr(updated_user, "_sa_instance_state")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), updated_user.__dict__)
+
+    def test_nonexisting_update(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.put("/user/yeet", headers={"Authorization": "Bearer " + token},
+                                        json={"password": "lol"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_without_token(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        response = self.client_mock.put("/user/lorem", json={"password": "lol"})
+        self.assertEqual(response.status_code, 401)
+
+    def test_unauth_update(self):
+        user = User.create_user(self.database, schemas.User(username="lorem", password="ipsum"))
+        user2 = User.create_user(self.database, schemas.User(username="lol", password="lol"))
+        token = User.create_access_token({"user": user.uuid})
+        response = self.client_mock.put("/user/lol", headers={"Authorization": "Bearer " + token},
+                                        json={"password": "lol"})
+        self.assertEqual(response.status_code, 403)
 
 
 if __name__ == '__main__':
