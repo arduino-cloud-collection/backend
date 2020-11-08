@@ -10,7 +10,8 @@ router = APIRouter()
 
 @router.get("/", tags=["controller"])
 def get_controllers(db: Session = Depends(get_db), current_user: User = Depends(User.get_current_user)):
-    return Controller.get_user_controllers(db, current_user)
+    controller = Controller.get_user_controllers(db, current_user)
+    return controller
 
 
 @router.post("/", tags=["controller"])
