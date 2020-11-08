@@ -21,8 +21,8 @@ def create_new_controller(data: controller_schema, db: Session = Depends(get_db)
 
 
 @router.get("/{controller_id}", tags=["controller"])
-def get_single_controller():
-    return {"foo": "bar"}
+def get_single_controller(controller_id: str, db: Session = Depends(get_db)):
+    return Controller.get_controller_by_id(db, controller_id)
 
 
 @router.delete("/{controller_id}", tags=["controller"])

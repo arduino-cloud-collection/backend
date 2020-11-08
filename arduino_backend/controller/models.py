@@ -30,6 +30,12 @@ class Controller(DatabaseBase):
             del i.controller
 
     @classmethod
+    def get_controller_by_id(cls, db: Session, controller_id: str):
+        controller = db.query(cls).filter(cls.uuid == controller_id).first()
+        cls.del_inf_relationship(controller.pins)
+        return controller
+
+    @classmethod
     def create_controller(cls, db: Session, data: controller_schema, user_id: User.uuid):
         uuid = str(uuid4())
         new_controller = Controller(uuid=uuid, name=data.name, user_id=user_id)
