@@ -45,6 +45,10 @@ class Controller(DatabaseBase):
         db.commit()
         return new_controller
 
+    def delete(self, db: Session):
+        db.delete(self)
+        db.commit()
+
 
 class Pin(DatabaseBase):
     __tablename__ = "pins"
