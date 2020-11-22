@@ -34,7 +34,7 @@ def delete_controller(controller_id: str, db: Session = Depends(get_db), current
     return_controller = Controller.get_controller_by_id(db, controller_id)
     if return_controller.owner == current_user:
         return_controller.delete(db)
-        return return_controller
+#        return Controller.del_inf_relationship(return_controller.pins)
     else:
         raise HTTPException(403)
 

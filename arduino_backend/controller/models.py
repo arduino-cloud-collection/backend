@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import Session, relationship
+from fastapi import HTTPException
 from uuid import uuid4
 from typing import List
 
@@ -32,8 +33,11 @@ class Controller(DatabaseBase):
     @classmethod
     def get_controller_by_id(cls, db: Session, controller_id: str):
         controller = db.query(cls).filter(cls.uuid == controller_id).first()
-        cls.del_inf_relationship(controller.pins)
-        return controller
+        if controller is None:
+            raise HTTPException(404)
+        else:
+            cls.del_inf_relationship(controller.pins)
+            return controller
 
     @classmethod
     def create_controller(cls, db: Session, data: controller_schema, user_id: User.uuid):
@@ -46,6 +50,7 @@ class Controller(DatabaseBase):
         return new_controller
 
     def delete(self, db: Session):
+        Pin.delete_pins_by_owner(db, self.uuid)
         db.delete(self)
         db.commit()
 
@@ -66,3 +71,10 @@ class Pin(DatabaseBase):
         db.add(pin)
         db.commit()
         return pin
+
+    @classmethod
+    def delete_pins_by_owner(cls, db: Session, owner_id: str):
+        pins = db.query(cls).filter(cls.controller_id == owner_id).all()
+        for pin in pins:
+            db.delete(pin)
+        db.commit()
