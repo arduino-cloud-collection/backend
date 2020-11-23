@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from arduino_backend.controller.models import Controller, Pin
 from arduino_backend.user.models import User
 from arduino_backend.database import get_db
-from arduino_backend.controller.schemas import controller_schema, pin_update_schema
+from arduino_backend.controller.schemas import controller_schema, pin_update_schema, controller_return_schema
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -21,10 +21,11 @@ def create_new_controller(data: controller_schema, db: Session = Depends(get_db)
 
 
 @router.get("/{controller_id}", tags=["controller"])
-def get_single_controller(controller_id: str, db: Session = Depends(get_db), current_user: User = Depends(User.get_current_user)):
+def get_single_controller(controller_id: str, db: Session = Depends(get_db), current_user: User = Depends(User.get_current_user)) -> controller_return_schema:
     return_controller = Controller.get_controller_by_id(db, controller_id)
     if return_controller.owner == current_user:
-        return return_controller
+        return_schema: controller_return_schema = controller_return_schema.from_orm(return_controller)
+        return return_schema
     else:
         raise HTTPException(403)
 
