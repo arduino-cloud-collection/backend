@@ -7,3 +7,7 @@ class controller_schema(BaseModel):
 
 class pin_schema(BaseModel):
     name: str
+
+
+class pin_update_schema(BaseModel):
+    state: int

@@ -22,7 +22,8 @@ class Controller(DatabaseBase):
     def get_user_controllers(cls, db: Session, user: User):
         controllers = db.query(cls).filter(cls.owner == user).all()
         for i in controllers:
-            cls.del_inf_relationship(i.pins)
+            #cls.del_inf_relationship(i.pins)
+            pass
         return controllers
 
     @staticmethod
@@ -36,7 +37,7 @@ class Controller(DatabaseBase):
         if controller is None:
             raise HTTPException(404)
         else:
-            cls.del_inf_relationship(controller.pins)
+            #cls.del_inf_relationship(controller.pins)
             return controller
 
     @classmethod
@@ -54,6 +55,11 @@ class Controller(DatabaseBase):
         db.delete(self)
         db.commit()
 
+    def get_pin(self, db: Session, pin_name: str):
+        pin: Pin = db.query(Pin).filter(Pin.name == pin_name and Pin.controller_id == self.uuid).first()
+        #del pin.controller
+        return pin
+
 
 class Pin(DatabaseBase):
     __tablename__ = "pins"
@@ -61,13 +67,14 @@ class Pin(DatabaseBase):
     uuid = Column(String(36), unique=True)
     name = Column(String)
     controller_id = Column(String(36), ForeignKey(Controller.uuid))
+    state = Column(Integer)
 
     controller = relationship("Controller", backref="pins")
 
     @classmethod
     def create_pin(cls, db: Session, data: pin_schema, controller_id: Controller.uuid):
         uuid = str(uuid4())
-        pin = Pin(uuid=uuid, name=data.name, controller_id=controller_id)
+        pin = Pin(uuid=uuid, name=data.name, controller_id=controller_id, state=0)
         db.add(pin)
         db.commit()
         return pin
@@ -78,3 +85,9 @@ class Pin(DatabaseBase):
         for pin in pins:
             db.delete(pin)
         db.commit()
+
+    def change_value(self, db: Session, new_value: int):
+        self.state = new_value
+        db.query(Pin).filter(Pin.uuid == self.uuid).update({"state": self.state})
+        db.commit()
+        return self

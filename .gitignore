@@ -130,4 +130,4 @@ src/test.db
 .idea
 
 # Sqlite Databases
-.db
+*.db
