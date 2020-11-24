@@ -18,8 +18,9 @@ def get_controllers(db: Session = Depends(get_db), current_user: User = Depends(
 
 @router.post("/", tags=["controller"])
 def create_new_controller(data: controller_schema, db: Session = Depends(get_db),
-                          current_user: User = Depends(User.get_current_user)):
-    return Controller.create_controller(db, data, current_user.uuid)
+                          current_user: User = Depends(User.get_current_user)) -> controller_return_schema:
+    new_controller: Controller = Controller.create_controller(db, data, current_user.uuid)
+    return controller_return_schema.from_orm(new_controller)
 
 
 @router.get("/{controller_id}", tags=["controller"])
