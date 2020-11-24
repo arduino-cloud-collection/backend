@@ -24,4 +24,4 @@ RUN apt-get update -y \
  && rm -rf /var/lib/apt/lists/*
 
 # command to run on container start
-CMD ["/usr/local/bin/uvicorn","arduino_backend.main:app","--host","192.168.0.1"]
+CMD ["/usr/local/bin/gunicorn", "--bind","0.0.0.0:8000", "-k", "uvicorn.workers.UvicornH11Worker", "arduino_backend.main:app"]
