@@ -7,8 +7,8 @@ ENV PYTHONUNBUFFERED=1
 # set the working directory
 WORKDIR /code
 
-# Copy the files
-COPY . .
+# Copy the dependencies
+COPY requirements.txt .
 
 # Installs the dependencies
 RUN apt-get update -y \
@@ -22,6 +22,9 @@ RUN apt-get update -y \
  && apt-get autoremove -y curl \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
+
+# Copy the files
+COPY . .
 
 # command to run on container start
 CMD ["/usr/local/bin/gunicorn", "--bind","0.0.0.0:8000", "-k", "uvicorn.workers.UvicornH11Worker", "arduino_backend.main:app"]
