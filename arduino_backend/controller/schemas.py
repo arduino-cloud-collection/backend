@@ -28,5 +28,12 @@ class controller_return_schema(BaseModel):
     uuid: str
     pins: List[pin_return_schema] = []
 
+    @staticmethod
+    def list_parse(fields: List) -> List:
+        schemas: List[controller_return_schema] = []
+        for field in fields:
+            schemas.append(controller_return_schema.from_orm(field))
+        return schemas
+
     class Config:
         orm_mode = True

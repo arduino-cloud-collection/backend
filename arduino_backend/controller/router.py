@@ -4,14 +4,16 @@ from arduino_backend.user.models import User
 from arduino_backend.database import get_db
 from arduino_backend.controller.schemas import controller_schema, pin_update_schema, controller_return_schema
 from sqlalchemy.orm import Session
+from typing import List
 
 router = APIRouter()
 
 
 @router.get("/", tags=["controller"])
 def get_controllers(db: Session = Depends(get_db), current_user: User = Depends(User.get_current_user)):
-    controller = Controller.get_user_controllers(db, current_user)
-    return controller
+    controllers: List[Controller] = Controller.get_user_controllers(db, current_user)
+    controllerSchemas: List[controller_return_schema] = controller_return_schema.list_parse(controllers)
+    return controllerSchemas
 
 
 @router.post("/", tags=["controller"])
