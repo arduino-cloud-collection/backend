@@ -21,15 +21,7 @@ class Controller(DatabaseBase):
     @classmethod
     def get_user_controllers(cls, db: Session, user: User):
         controllers = db.query(cls).filter(cls.owner == user).all()
-        for i in controllers:
-            #cls.del_inf_relationship(i.pins)
-            pass
         return controllers
-
-    @staticmethod
-    def del_inf_relationship(pins: List):
-        for i in pins:
-            del i.controller
 
     @classmethod
     def get_controller_by_id(cls, db: Session, controller_id: str):
@@ -37,7 +29,6 @@ class Controller(DatabaseBase):
         if controller is None:
             raise HTTPException(404)
         else:
-            #cls.del_inf_relationship(controller.pins)
             return controller
 
     @classmethod
@@ -57,7 +48,6 @@ class Controller(DatabaseBase):
 
     def get_pin(self, db: Session, pin_name: str):
         pin: Pin = db.query(Pin).filter(Pin.name == pin_name and Pin.controller_id == self.uuid).first()
-        #del pin.controller
         return pin
 
 
@@ -86,7 +76,7 @@ class Pin(DatabaseBase):
             db.delete(pin)
         db.commit()
 
-    def change_value(self, db: Session, new_value: int):
+    def change_state(self, db: Session, new_value: int):
         self.state = new_value
         db.query(Pin).filter(Pin.uuid == self.uuid).update({"state": self.state})
         db.commit()
