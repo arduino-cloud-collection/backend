@@ -1,5 +1,4 @@
 import typer
-
 from fastapi_migrations.cli import MigrationsCli
 
 app: typer.Typer = typer.Typer()
