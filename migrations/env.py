@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-from sqlalchemy import pool
+from sqlalchemy import pool, create_engine
 from sqlalchemy import engine_from_config
 from arduino_backend.database import DatabaseBase as Base
 # This Lines are necessary for the creation of the database Metadata
@@ -69,6 +69,7 @@ def run_migrations_online():
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
+    url = getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
 
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
@@ -80,11 +81,10 @@ def run_migrations_online():
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix='sqlalchemy.',
-        poolclass=pool.NullPool,
-    )
+    if "sqlite:///" in url:
+        connectable = create_engine(url, connect_args={'check_same_thread': False})
+    else:
+        connectable = create_engine(url)
 
     with connectable.connect() as connection:
         context.configure(
