@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 from typing import Optional
+from uuid import uuid4
 
 from bcrypt import gensalt
 from blake3 import blake3
@@ -8,8 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, load_only
-from uuid import uuid4
+from sqlalchemy.orm import Session, load_only, relationship
 
 from arduino_backend import database
 from arduino_backend import settings
@@ -29,6 +29,8 @@ class User(database.DatabaseBase):
     password = Column(String)
     salt = Column(String)
 
+    controllers = relationship("Controller", back_populates="owner")
+
     # Returns all users as objects
     @classmethod
     def get_users(cls, db: Session):
@@ -38,7 +40,7 @@ class User(database.DatabaseBase):
     # Returns single user by username
     @classmethod
     def get_user(cls, db: Session, username: str):
-        user = db.query(cls).filter(cls.username == username).options(load_only(*cls.returnFields)).first()
+        user = db.query(cls).filter(cls.username == username).first()
         return user
 
     @classmethod

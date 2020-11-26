@@ -293,7 +293,8 @@ class single_user_get_tests(databaseTest):
         response = self.client_mock.get("/user/lorem")
         delattr(single_user, "_sa_instance_state")
         single_user = single_user.__dict__
-        del single_user["uuid"], single_user["password"], single_user["salt"]
+        #del single_user["uuid"], single_user["password"], single_user["salt"]
+        single_user["controllers"] = []
         self.assertEqual(json.loads(response.content.decode()), single_user)
 
 
@@ -325,7 +326,7 @@ class user_delete_tests(databaseTest):
         user = User.get_user(self.database, "lorem")
         token = User.create_access_token({"user": user.uuid})
         response = self.client_mock.delete("/user/lorem", headers={"Authorization": "Bearer " + token})
-        delattr(user, "uuid")
+        user.controllers = []
         delattr(user, "_sa_instance_state")
         self.assertEqual(response.json(), user.__dict__)
 

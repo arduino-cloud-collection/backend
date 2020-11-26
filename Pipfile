@@ -17,6 +17,12 @@ bcrypt = "3.2.0"
 requests = "2.25.0"
 async-exit-stack = "1.0.1"
 async-generator = "1.10"
+gunicorn = "*"
+pyfiglet = "*"
+fastapi-migrations = "*"
+typer = "*"
+fastapi-sqlalchemy = "*"
+alembic = "*"
 
 [requires]
 python_version = "3.8"
