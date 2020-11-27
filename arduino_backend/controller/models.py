@@ -35,10 +35,10 @@ class Controller(DatabaseBase):
     def create_controller(cls, db: Session, data: controller_schema, user_id: User.uuid):
         uuid = str(uuid4())
         new_controller = Controller(uuid=uuid, name=data.name, user_id=user_id)
-        for i in range(9):
-            Pin.create_pin(db, pin_schema(name="D" + str(i)), new_controller.uuid)
         db.add(new_controller)
         db.commit()
+        for i in range(9):
+            Pin.create_pin(db, pin_schema(name="D" + str(i)), controller_id=uuid)
         return new_controller
 
     def delete(self, db: Session):
@@ -56,7 +56,7 @@ class Pin(DatabaseBase):
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), unique=True)
     name = Column(String)
-    controller_id = Column(String(36), ForeignKey(Controller.uuid))
+    controller_id = Column(String(36), ForeignKey("controllers.uuid"))
     state = Column(Integer)
 
     controller = relationship("Controller", backref="pins")

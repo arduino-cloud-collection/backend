@@ -23,5 +23,3 @@ app.add_middleware(CORSMiddleware,
 app.include_router(user_router.router, prefix="/user")
 app.include_router(auth_router.router, prefix="/auth")
 app.include_router(controller_router.router, prefix="/controller")
-
-database.DatabaseBase.metadata.create_all(bind=database.engine)
