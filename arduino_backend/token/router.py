@@ -9,8 +9,10 @@ router = APIRouter()
 
 
 @router.get("/", tags=["token"])
-def get_tokens():
-    return {"get": "token"}
+def get_tokens(db: Session = Depends(get_db), current_user: User = Depends(User.get_current_user)):
+    tokens = Token.all(db, current_user)
+    tokens_schema = token_return_schema.list_parse(tokens)
+    return tokens_schema
 
 
 @router.post("/", tags=["token"])

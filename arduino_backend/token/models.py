@@ -26,3 +26,8 @@ class Token(DatabaseBase):
         db.add(new_token)
         db.commit()
         return new_token
+
+    @classmethod
+    def all(cls, db: Session, user: User):
+        tokens = db.query(cls).filter(cls.owner == user).all()
+        return tokens
