@@ -6,6 +6,7 @@ from arduino_backend.database import DatabaseBase as Base
 # This Lines are necessary for the creation of the database Metadata
 from arduino_backend.user import models as userModels
 from arduino_backend.controller import models as controllerModels
+from arduino_backend.token import models as tokenModels
 
 from alembic import context
 from os import getenv
