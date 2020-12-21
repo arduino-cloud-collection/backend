@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, relationship
 from arduino_backend.token.schemas import token_schema
 from arduino_backend.user.models import User
 from arduino_backend.controller.models import Controller
+from arduino_backend.token.schemas import token_update_schema
 from uuid import uuid4
 
 
@@ -31,3 +32,17 @@ class Token(DatabaseBase):
     def all(cls, db: Session, user: User):
         tokens = db.query(cls).filter(cls.owner == user).all()
         return tokens
+
+    @classmethod
+    def by_name(cls, db: Session, name: str):
+        token = db.query(cls).filter(cls.name == name).first()
+        return token
+
+    def delete(self, db: Session):
+        db.delete(self)
+        db.commit()
+        return self
+
+    def update(self, db: Session, data: token_update_schema):
+        token = db.query(Token).filter(Token == self).update(data)
+        return token

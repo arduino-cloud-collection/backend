@@ -21,3 +21,7 @@ class token_return_schema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class token_update_schema(BaseModel):
+    name: str
