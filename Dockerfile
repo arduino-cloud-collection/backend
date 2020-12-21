@@ -16,7 +16,7 @@ RUN apt-get update -y \
  && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rust.sh \
  && sh rust.sh -y \
  && rm rust.sh \
- && export PATH=$HOME/.cargo/bin \
+ && source $HOME/.cargo/env \
  && pip install  --no-cache-dir --upgrade pip \
  && pip install  --no-cache-dir -r requirements.txt \
  && /root/.cargo/bin/rustup self uninstall -y \
