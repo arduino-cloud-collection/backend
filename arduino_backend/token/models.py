@@ -50,6 +50,14 @@ class Token(DatabaseBase):
         return token
 
     @staticmethod
+    def get_controller_by_token(db: Session, token: str) -> Controller:
+        token: Token = db.query(Token).filter(Token.uuid == token).first()
+        try:
+            return token.controller
+        except AttributeError:
+            return None
+
+    @staticmethod
     async def get_token(
             websocket: WebSocket,
             token: Optional[str] = Query(None)):
