@@ -1,3 +1,5 @@
+import asyncio
+
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import Session, relationship
 from fastapi import HTTPException

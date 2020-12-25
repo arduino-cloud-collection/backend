@@ -4,8 +4,10 @@ from json import JSONDecodeError
 from fastapi import APIRouter, WebSocket, Depends, status
 from fastapi_sqlalchemy import db
 from pydantic.error_wrappers import ValidationError
+from websockets.exceptions import ConnectionClosedError
 
 from arduino_backend.clientsocket.schemas import auth_schema
+from arduino_backend.controller.models import Controller
 from arduino_backend.controller.schemas import controller_schema, controller_return_schema
 from arduino_backend.token.models import Token
 
@@ -18,9 +20,19 @@ async def client_socket(websocket: WebSocket):
         await websocket.accept()
         try:
             auth_data: auth_schema = auth_schema(**await websocket.receive_json())
-            controller: controller_return_schema = controller_return_schema\
-                .from_orm(Token.get_controller_by_token(db.session, auth_data.key))
+            controller_class = Token.get_controller_by_token(db.session, auth_data.key)
+            controller: controller_return_schema = controller_return_schema \
+                .from_orm(controller_class)
             await websocket.send_json(controller.json())
+            while True:
+                try:
+                    await asyncio.sleep(1)
+                    session = db.session
+                    controller = controller_return_schema.from_orm(Controller.get_controller_by_id(session, controller.uuid))
+                    session.close()
+                    await websocket.send_json(controller.json())
+                except ConnectionClosedError:
+                    break
         except JSONDecodeError:
             await websocket.close(code=1007)
         except ValidationError:
