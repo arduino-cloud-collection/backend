@@ -28,9 +28,11 @@ async def client_socket(websocket: WebSocket):
                 try:
                     await asyncio.sleep(1)
                     session = db.session
-                    controller = controller_return_schema.from_orm(Controller.get_controller_by_id(session, controller.uuid))
+                    controller_update_schema = controller_return_schema.from_orm(controller_return_schema.from_orm(Controller.get_controller_by_id(session, controller.uuid)))
+                    if controller_update_schema.json() != controller.json():
+                        controller = controller_update_schema
+                        await websocket.send_json(controller.json())
                     session.close()
-                    await websocket.send_json(controller.json())
                 except ConnectionClosedError:
                     break
         except JSONDecodeError:
