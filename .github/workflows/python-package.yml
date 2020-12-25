@@ -46,7 +46,6 @@ jobs:
     - name: Test with unittest
       run: |
         source path.sh && python -m unittest
-      working-directory: ./arduino_backend
     - name: Build pypi package
       run: |
           python setup.py build
