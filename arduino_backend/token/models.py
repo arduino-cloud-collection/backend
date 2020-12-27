@@ -1,3 +1,4 @@
+from fastapi import WebSocket, Query, status
 from arduino_backend.database import DatabaseBase
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import Session, relationship
@@ -6,6 +7,7 @@ from arduino_backend.user.models import User
 from arduino_backend.controller.models import Controller
 from arduino_backend.token.schemas import token_update_schema
 from uuid import uuid4
+from typing import Optional
 
 
 class Token(DatabaseBase):
@@ -46,3 +48,20 @@ class Token(DatabaseBase):
     def update(self, db: Session, data: token_update_schema):
         token = db.query(Token).filter(Token == self).update(data)
         return token
+
+    @staticmethod
+    def get_controller_by_token(db: Session, token: str) -> Controller:
+        token: Token = db.query(Token).filter(Token.uuid == token).first()
+        try:
+            return token.controller
+        except AttributeError:
+            return None
+
+    @staticmethod
+    async def get_token(
+            websocket: WebSocket,
+            token: Optional[str] = Query(None)):
+        if token is None:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        else:
+            return token
