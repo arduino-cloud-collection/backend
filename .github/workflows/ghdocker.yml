@@ -25,3 +25,5 @@ jobs:
         
       - name: GitHub Container Registry Docker Action
         uses: trentjones21/github-docker@master
+        with:
+          accessToken: ${{ github.token }}
