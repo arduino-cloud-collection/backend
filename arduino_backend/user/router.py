@@ -16,7 +16,6 @@ def create_user(user: userSchema.User, db: Session = Depends(database.get_db)):
 
 @router.get("/", tags=["user"])
 def get_users(db: Session = Depends(database.get_db)):
-    error: int = 1 / 0
     return User.get_users(db=db)
 
 
