@@ -4,6 +4,10 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+flake8 = "*"
+pylint = "*"
+jedi = "*"
+pynvim = "*"
 
 [packages]
 fastapi = "0.63.0"
@@ -24,6 +28,7 @@ typer = "0.3.2"
 fastapi-sqlalchemy = "0.2.1"
 alembic = "1.4.3"
 websockets = "8.1"
+sentry-sdk = "*"
 
 [requires]
 python_version = "3.8"
